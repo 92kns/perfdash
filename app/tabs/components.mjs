@@ -195,7 +195,7 @@ function loadFromURL() {
                 _(`#c${c.id}`).checked = true;
             }
         }
-    } else {
+    } else if (searchParams.has("component")) {
         const selectedComponents = new Set(searchParams.getAll("component"));
         for (const c of Global.allComponents()) {
             const key = `${c.product}:${c.component}`;
@@ -206,6 +206,10 @@ function loadFromURL() {
         }
         if (selectedComponents.size > 0) {
             document.body.classList.add("component-warning");
+        }
+    } else {
+        for (const c of Global.allComponents()) {
+            _(`#c${c.id}`).checked = true;
         }
     }
 }

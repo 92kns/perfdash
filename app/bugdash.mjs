@@ -43,13 +43,13 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     // navigate to the tab saved in the hash
     let $tab = hashToTab();
-    // else default to triage tab if we have selected components, or the
+    // else default to stalled tab if we have selected components, or the
     // components tab as a fallback default
     if (!$tab) {
         $tab =
             Global.selectedComponents().length === 0
                 ? _(".tab[data-tab=components]")
-                : _(".tab[data-tab=triage]");
+                : _(".tab[data-tab=stalled]");
     }
     await Tabs.switchTo($tab);
 
