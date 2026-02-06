@@ -25,8 +25,3 @@ run:
 .PHONY: clean
 clean:
 	rm -rf format-*
-
-.PHONY: deploy
-deploy:
-	heroku git:remote -a bmo-bugdash
-	git push heroku main

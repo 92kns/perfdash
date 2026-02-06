@@ -2,7 +2,6 @@ import { _ } from "util";
 import * as BugList from "buglist";
 import * as Blockers from "buglists/blockers";
 import * as Criticals from "buglists/criticals";
-import * as TopCrashers from "buglists/topcrashers";
 
 export function initUI() {
     const $content = _("#important-content");
@@ -10,5 +9,4 @@ export function initUI() {
     const $group = BugList.newGroup($content);
     Blockers.init($group, true);
     Criticals.init($group, true);
-    TopCrashers.init($group, true);
 }

@@ -121,11 +121,11 @@ export function buglistUrl(ids) {
 }
 
 export function setApiKey(key) {
-    window.localStorage.setItem("api-key", key);
+    window.localStorage.setItem("perfdash.api-key", key);
 }
 
 export function getApiKey() {
-    return window.localStorage.getItem("api-key") || "";
+    return window.localStorage.getItem("perfdash.api-key") || "";
 }
 
 export async function whoami() {
