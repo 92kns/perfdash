@@ -9,27 +9,8 @@ const g = {
     release: undefined,
     components: undefined,
     account: undefined,
-    products: [
-        "Core",
-        "Developer Infrastructure",
-        "DevTools",
-        "External Software Affecting Firefox",
-        "Firefox Build System",
-        "Firefox Enterprise",
-        "Firefox for Android",
-        "Firefox for iOS",
-        "Firefox",
-        "Focus",
-        "GeckoView",
-        "NSPR",
-        "NSS",
-        "Release Engineering",
-        "Remote Protocol",
-        "Testing",
-        "Toolkit",
-        "Web Compatibility",
-        "WebExtensions",
-    ],
+    products: ["Testing"],
+    testingComponents: ["AWSY", "mozperftest", "Performance", "Raptor", "Talos"],
 };
 
 export function allComponents() {
@@ -132,40 +113,60 @@ async function loadComponents() {
     }
 
     g.components = [];
-    for (const product of g.products) {
-        setLoadingStage(`Bugzilla product: ${product}`);
-        try {
-            const response = await Bugzilla.rest(
-                `product/${encodeURIComponent(product)}`,
-                {
-                    // eslint-disable-next-line camelcase
-                    include_fields:
-                        "components.id,components.name,components.description,components.team_name",
-                },
-            );
-            if (response.products.length === 0) {
+    setLoadingStage("Loading Bugzilla products...");
+
+    const productFetches = g.products.map((product) =>
+        Bugzilla.rest(`product/${encodeURIComponent(product)}`, {
+            // eslint-disable-next-line camelcase
+            include_fields:
+                "components.id,components.name,components.description,components.team_name",
+        })
+            .then((response) => ({ product, response }))
+            .catch((error) => ({ product, error })),
+    );
+
+    try {
+        const results = await Promise.all(productFetches);
+
+        for (const result of results) {
+            if (result.error) {
+                await Dialog.alert(
+                    `Failed to load Bugzilla components for ${result.product}: ${result.error}`,
+                );
+                return;
+            }
+
+            if (result.response.products.length === 0) {
                 // eslint-disable-next-line no-console
-                console.error("Invalid product:", product);
+                console.error("Invalid product:", result.product);
                 document.body.classList.add("global-error");
                 continue;
             }
-            for (const component of response.products[0].components) {
+
+            for (const component of result.response.products[0].components) {
+                if (
+                    g.testingComponents &&
+                    !g.testingComponents.includes(component.name)
+                ) {
+                    continue;
+                }
+
                 g.components.push({
                     id: component.id,
-                    title: `${product}: ${component.name}`,
+                    title: `${result.product}: ${component.name}`,
                     desc: component.description
                         .replaceAll(/<[^>]+>/g, " ")
                         .replaceAll("&lt;", "<")
                         .replaceAll("&gt;", ">"),
-                    product: product,
+                    product: result.product,
                     component: component.name,
                     team: component.team_name,
                 });
             }
-        } catch (error) {
-            await Dialog.alert(`Failed to load Bugzilla components: ${error}`);
-            return;
         }
+    } catch (error) {
+        await Dialog.alert(`Failed to load Bugzilla components: ${error}`);
+        return;
     }
 
     window.localStorage.setItem("componentsID", currentCacheID);

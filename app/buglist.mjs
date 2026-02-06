@@ -312,9 +312,9 @@ export async function refresh(id) {
     if (buglist.includeFn !== undefined) {
         if (buglist.includeFn.constructor.name === "AsyncFunction") {
             // async function (eg. queries Bugzilla)
-            // run in parallel, but no more than 10 at a time
+            // run in parallel, but no more than 50 at a time
             let failed = false;
-            const chunkedBugs = chunked(bugs, 10);
+            const chunkedBugs = chunked(bugs, 50);
             for (const bugChunk of chunkedBugs) {
                 const includePromises = [];
                 for (const bug of bugChunk) {
@@ -361,12 +361,16 @@ export async function refresh(id) {
         if (Global.getAccount()) {
             // auth is required to get full user details
             const chunkedUsernames = chunked(usernames, 100);
-            for (const usernamesChunk of chunkedUsernames) {
+            const userFetches = chunkedUsernames.map((usernamesChunk) => {
                 const args = ["include_fields=email,nick,real_name"];
                 for (const username of usernamesChunk) {
                     args.push(`names=${encodeURIComponent(username)}`);
                 }
-                const res = await Bugzilla.rest("user", args.join("&"));
+                return Bugzilla.rest("user", args.join("&"));
+            });
+
+            const results = await Promise.all(userFetches);
+            for (const res of results) {
                 for (const user of res.users) {
                     users[user.email] = user;
                 }
